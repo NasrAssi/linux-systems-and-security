@@ -26,6 +26,7 @@ section .rodata
     fmt_hex: db "%02hhx", 0
     newline: db 10, 0
     prompt_str: db "Enter hex digits (no spaces):", 0
+    fmt_oom: db "Out of memory", 10, 0
 
 
 section .text
@@ -253,6 +254,8 @@ inc edx                    ; new even length
     push eax
     call malloc
     add esp, 4
+    test eax, eax
+    jz malloc_fail
     mov esi, eax             ; ESI = pointer to allocated struct
     mov edx, [byte_count]     ; restore byte count for use in .convert_loop
 
@@ -326,8 +329,11 @@ hexchar_to_nibble:
     sub al, '0'
     ret
 .bad:
-    mov al, 0
-    ret
+    push fmt_invalid_arg
+    call puts
+    add esp, 4
+    push dword 1
+    call exit
 
 
 
@@ -392,6 +398,8 @@ add_multi:
     mov [SHEROT], eax         ; Save result pointer
     popad         
     mov eax,[SHEROT] 
+    test eax, eax
+    jz malloc_fail
     mov edx, eax              ; edx = result base address
 
     ; Store size (single byte, not a dword)
@@ -402,6 +410,8 @@ add_multi:
     xor esi, esi              ; esi = index
     clc     ;  Clear Carry Flag
 
+    test ecx, ecx             ; min_len==0? nothing to add, just copy longer
+    jz .check_remaining
 .add_loop:
 
     mov al, [edi + esi + 1]   ; A.num[i]
@@ -412,6 +422,7 @@ add_multi:
     dec ecx
     jnz .add_loop
     
+.check_remaining:
     inc dword[remaining_bytes]
     dec dword[remaining_bytes]
     jz .final_carry_check
@@ -428,6 +439,8 @@ add_multi:
 
 .final_carry_check:
     jnc .done
+    cmp byte [edx - 1], 0xFF   ; size maxed (255)? 256 bytes is unrepresentable
+    je .done                   ; drop top carry rather than wrap size to 0
     mov byte [edx + esi], 1   ; extra byte for carry
     inc byte [edx - 1]        ; update size
 
@@ -507,6 +520,8 @@ PRmulti:
     call malloc
     pop edx
     pop ecx
+    test eax, eax
+    jz malloc_fail
     mov esi, eax            ; ESI = pointer to struct
 
     ; store size in first byte
@@ -531,3 +546,10 @@ PRmulti:
     pop esi
     pop ebx
     ret
+
+malloc_fail:
+    push fmt_oom
+    call puts
+    add esp, 4
+    push dword 1
+    call exit

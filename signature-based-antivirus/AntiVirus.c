@@ -138,6 +138,24 @@ void neutralize_virus(char* fileName, int signatureOffset) {
     fclose(f);
 }
 
+// Read an entire file into a heap buffer; returns NULL on error, sets *out_len.
+char* read_entire_file(const char* fileName, size_t* out_len) {
+    FILE* file = fopen(fileName, "rb");
+    if (!file) {
+        fprintf(stderr, "cannot open %s\n", fileName);
+        return NULL;
+    }
+    fseek(file, 0, SEEK_END);
+    long fsize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    if (fsize < 0) { fclose(file); return NULL; }
+    char* buffer = malloc(fsize);
+    if (!buffer) { fclose(file); return NULL; }
+    *out_len = fread(buffer, 1, fsize, file);
+    fclose(file);
+    return buffer;
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <suspected file>\n", argv[0]);
@@ -205,38 +223,17 @@ int main(int argc, char** argv) {
                 list_print(virusList, stdout);
                 break;
             case 3: {
-                FILE* file = fopen(suspectedFile, "rb");
-                if (!file) {
-                    fprintf(stderr, "cannot open %s\n", suspectedFile);
-                    break;
-                }
-                fseek(file, 0, SEEK_END);
-                long fsize = ftell(file);
-                fseek(file, 0, SEEK_SET);
-                if (fsize < 0) { fclose(file); break; }
-                char* buffer = malloc(fsize);
-                if (!buffer) { fclose(file); break; }
-                size_t readBytes = fread(buffer, 1, fsize, file);
-                fclose(file);
+                size_t readBytes = 0;
+                char* buffer = read_entire_file(suspectedFile, &readBytes);
+                if (!buffer) break;
                 detect_virus(buffer, readBytes, virusList);
                 free(buffer);
                 break;
             }
             case 4: {
-                FILE* file = fopen(suspectedFile, "rb");
-                if (!file) {
-                    fprintf(stderr, "cannot open %s\n", suspectedFile);
-                    break;
-                }
-                fseek(file, 0, SEEK_END);
-                long fsize = ftell(file);
-                fseek(file, 0, SEEK_SET);
-                if (fsize < 0) { fclose(file); break; }
-                char* buffer = malloc(fsize);
-                if (!buffer) { fclose(file); break; }
-                size_t readBytes = fread(buffer, 1, fsize, file);
-                fclose(file);
-
+                size_t readBytes = 0;
+                char* buffer = read_entire_file(suspectedFile, &readBytes);
+                if (!buffer) break;
                 for (size_t i = 0; i < readBytes; i++) {
                     link* curr = virusList;
                     while (curr) {

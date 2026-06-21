@@ -89,7 +89,7 @@ void examine_elf_file()
     // Validate the section header table before trusting e_shoff/e_shnum/e_shstrndx
     if (header->e_shnum == 0 ||
         header->e_shstrndx >= header->e_shnum ||
-        (size_t)header->e_shoff + (size_t)header->e_shnum * sizeof(Elf32_Shdr) > (size_t)file_size)
+        (unsigned long long)header->e_shoff + (unsigned long long)header->e_shnum * sizeof(Elf32_Shdr) > (unsigned long long)file_size)
     {
         printf("Invalid ELF section header table.\n");
         munmap(map_start, file_size);
@@ -162,12 +162,16 @@ void print_section_names()
         Elf32_Ehdr *header = file->header;
         Elf32_Shdr *section_headers = file->section_headers;
         char *str_table = file->section_str_table;
+        Elf32_Word strtab_size = section_headers[header->e_shstrndx].sh_size;
 
         for (int i = 0; i < header->e_shnum; i++)
         {
+            const char *sec_name = (section_headers[i].sh_name < strtab_size)
+                                       ? str_table + section_headers[i].sh_name
+                                       : "<invalid>";
             printf("[%d] %s 0x%x %d %d %d\n",
                    i,
-                   str_table + section_headers[i].sh_name,
+                   sec_name,
                    section_headers[i].sh_addr,
                    section_headers[i].sh_offset,
                    section_headers[i].sh_size,
@@ -200,7 +204,7 @@ void print_symbols()
             if (section->sh_type == SHT_SYMTAB)
             {
                 // Validate section offsets and sizes
-                if (section->sh_offset + section->sh_size > file->file_size ||
+                if ((unsigned long long)section->sh_offset + section->sh_size > file->file_size ||
                     section->sh_link >= file->header->e_shnum)
                 {
                     printf("Invalid symbol table section.\n");
@@ -220,8 +224,8 @@ void print_symbols()
         }
 
         // Additional safety checks
-        if (symtab_section->sh_offset + symtab_section->sh_size > file->file_size ||
-            strtab_section->sh_offset + strtab_section->sh_size > file->file_size)
+        if ((unsigned long long)symtab_section->sh_offset + symtab_section->sh_size > file->file_size ||
+            (unsigned long long)strtab_section->sh_offset + strtab_section->sh_size > file->file_size)
         {
             printf("Invalid section offsets.\n");
             continue;
@@ -335,6 +339,16 @@ void check_files_for_merge()
         return;
     }
 
+    // Validate that both symbol/string tables lie within their files
+    if ((unsigned long long)symtab1->sh_offset + symtab1->sh_size > file1->file_size ||
+        (unsigned long long)strtab1->sh_offset + strtab1->sh_size > file1->file_size ||
+        (unsigned long long)symtab2->sh_offset + symtab2->sh_size > file2->file_size ||
+        (unsigned long long)strtab2->sh_offset + strtab2->sh_size > file2->file_size)
+    {
+        printf("Invalid symbol/string table offsets.\n");
+        return;
+    }
+
     Elf32_Sym *symbols1 = (Elf32_Sym *)((char *)file1->map_start + symtab1->sh_offset);
     Elf32_Sym *symbols2 = (Elf32_Sym *)((char *)file2->map_start + symtab2->sh_offset);
     char *str_table1 = (char *)file1->map_start + strtab1->sh_offset;
@@ -346,6 +360,7 @@ void check_files_for_merge()
     // Check symbols in first file
     for (int i = 1; i < num_symbols1; i++)
     {
+        if (symbols1[i].st_name >= strtab1->sh_size) continue;   // bound name offset
         char *sym_name = str_table1 + symbols1[i].st_name;
         int found_in_second = 0;
 
@@ -356,6 +371,7 @@ void check_files_for_merge()
             // int found_defined = 0;
             for (int j = 1; j < num_symbols2; j++)
             {
+                if (symbols2[j].st_name >= strtab2->sh_size) continue;
                 if (strcmp(sym_name, str_table2 + symbols2[j].st_name) == 0)
                 {
                     if (symbols2[j].st_shndx != SHN_UNDEF)
@@ -377,6 +393,7 @@ void check_files_for_merge()
         {
             for (int j = 1; j < num_symbols2; j++)
             {
+                if (symbols2[j].st_name >= strtab2->sh_size) continue;
                 if (strcmp(sym_name, str_table2 + symbols2[j].st_name) == 0 &&
                     symbols2[j].st_shndx != SHN_UNDEF && !is_empty_or_spaces(sym_name))
                 {

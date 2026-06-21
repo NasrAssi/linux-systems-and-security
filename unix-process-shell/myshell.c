@@ -156,7 +156,7 @@ int handle_builtin(cmdLine* cmd) {
     return 0;
 }
 
-void execute_pipeline(cmdLine* left, cmdLine* right) {
+void execute_pipeline(cmdLine* left, cmdLine* right, int blocking) {
     if (left->arguments[0] == NULL || right->arguments[0] == NULL) {
         fprintf(stderr, "invalid pipe command\n");
         return;
@@ -194,15 +194,17 @@ void execute_pipeline(cmdLine* left, cmdLine* right) {
 
     close(pipefd[0]);                       // parent closes read end
 
-    waitpid(pid1, NULL, 0);
-    waitpid(pid2, NULL, 0);
+    if (blocking) {                         // only wait for a foreground pipeline
+        waitpid(pid1, NULL, 0);
+        waitpid(pid2, NULL, 0);
+    }
 }
 
 void execute_cmd(cmdLine* pCmd) {
     if (pCmd->arguments[0] == NULL) return;   // nothing to run (e.g. redirect-only line)
 
     if (pCmd->next != NULL) {                 // pipeline: pCmd | pCmd->next
-        execute_pipeline(pCmd, pCmd->next);
+        execute_pipeline(pCmd, pCmd->next, pCmd->next->blocking);
         return;
     }
 

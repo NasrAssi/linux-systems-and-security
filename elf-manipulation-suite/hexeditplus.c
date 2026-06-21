@@ -59,7 +59,12 @@ int main() {
         }
         printf("Option: ");
         int choice;
-        if (scanf("%d", &choice) != 1) { printf("Invalid input\n"); exit(1); }
+        if (scanf("%d", &choice) != 1) {
+            if (feof(stdin)) quit_program();   // clean exit on EOF
+            int ch; while ((ch = getchar()) != '\n' && ch != EOF);  // discard bad line
+            printf("Invalid choice\n");
+            continue;
+        }
         getchar();
         int num_options = 0;
         while (menu[num_options].name) num_options++;
@@ -139,6 +144,9 @@ void memory_display() {
     if (scanf("%x %d", &addr, &length) != 2) { printf("Invalid input\n"); getchar(); return; }
     getchar();
     char *start = (addr == 0 ? (char*)mem_buf : (char*)addr);
+    if (length < 0) length = 0;
+    if (start == (char*)mem_buf && (long)length > (long)(MEM_BUF_SIZE / unit_size))
+        length = MEM_BUF_SIZE / unit_size;   // never read past mem_buf
     if (display_mode) {
         printf("Decimal ========\n");
         for (int i = 0; i < length; i++) {
@@ -170,6 +178,9 @@ void save_into_file() {
     if (fd < 0) { perror("open"); return; }
     if (lseek(fd, target, SEEK_SET) == (off_t)-1) { perror("lseek"); close(fd); return; }
     char *src_ptr = (source == 0 ? (char*)mem_buf : (char*)source);
+    if (length < 0) length = 0;
+    if (src_ptr == (char*)mem_buf && (long)length > (long)(MEM_BUF_SIZE / unit_size))
+        length = MEM_BUF_SIZE / unit_size;   // never read past mem_buf
     ssize_t to_write = (ssize_t)length * unit_size;
     ssize_t wr = write(fd, src_ptr, to_write);
     if (wr < 0) { perror("write"); close(fd); return; }

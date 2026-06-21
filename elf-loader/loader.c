@@ -11,6 +11,9 @@
 // Declare startup function from startup.s (provided by lab)
 extern void startup(void (*entry)(), int argc, char **argv);
 
+// File size of the ELF being loaded (for bounds-checking untrusted headers)
+static long g_filesize = 0;
+
 // Iterate all program headers
 int foreach_phdr(void *map_start, void (*func)(Elf32_Phdr *, int, void *), void *arg) {
     Elf32_Ehdr *ehdr = (Elf32_Ehdr *)map_start;
@@ -19,6 +22,11 @@ int foreach_phdr(void *map_start, void (*func)(Elf32_Phdr *, int, void *), void 
         ehdr->e_ident[EI_MAG2] != ELFMAG2 ||
         ehdr->e_ident[EI_MAG3] != ELFMAG3) {
         fprintf(stderr, "Not a valid ELF file.\n");
+        return -1;
+    }
+    if ((unsigned long long)ehdr->e_phoff +
+        (unsigned long long)ehdr->e_phnum * sizeof(Elf32_Phdr) > (unsigned long long)g_filesize) {
+        fprintf(stderr, "Invalid program header table.\n");
         return -1;
     }
     Elf32_Phdr *phdr = (Elf32_Phdr *)((char *)map_start + ehdr->e_phoff);
@@ -79,6 +87,10 @@ void load_segment(Elf32_Phdr *phdr, int i, void *map_start) {
         exit(1);
     }
 
+    if ((unsigned long long)phdr->p_offset + phdr->p_filesz > (unsigned long long)g_filesize) {
+        fprintf(stderr, "Segment data exceeds file bounds.\n");
+        exit(1);
+    }
     memcpy((char *)mapped + offset_in_page,
            (char *)map_start + phdr->p_offset,
            phdr->p_filesz);
@@ -135,6 +147,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     fclose(file);
+    g_filesize = filesize;
 
     printf("Program headers:\n");
     foreach_phdr(map_start, print_phdr_full, NULL);

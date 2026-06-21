@@ -5,13 +5,13 @@
 # Compiled executables (Make targets)
 elf-analyzer/myELF
 elf-loader/loader
-antivirus-scanner/AntiVirus
-custom-shell/myshell
-custom-shell/mypipeline
-custom-shell/looper
-x86-assembly/multi
-elf-binary-tools/task1
-elf-binary-tools/task4
+signature-based-antivirus/AntiVirus
+unix-process-shell/myshell
+unix-process-shell/mypipeline
+unix-process-shell/looper
+x86-bignum-arithmetic/multi
+elf-manipulation-suite/hexeditplus
+elf-manipulation-suite/digit_counter
 
 # Editor / OS cruft
 .vscode/

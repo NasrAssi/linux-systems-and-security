@@ -1,6 +1,6 @@
 # ELF Loader
 
-A user-space **program loader**: given a statically-linked 32-bit ELF executable, it parses the program headers, maps each loadable segment into memory at the correct virtual address with the correct permissions, and then jumps to the program's entry point — effectively doing by hand what the kernel's loader does.
+A user-space **program loader**: given a statically-linked 32-bit ELF executable, it parses the program headers, maps each loadable segment into memory at the correct virtual address with the correct permissions, and then jumps to the program's entry point — doing by hand what the kernel's loader does.
 
 ![Loaded object memory layout](loaded-object.jpg)
 
@@ -14,10 +14,10 @@ A user-space **program loader**: given a statically-linked 32-bit ELF executable
 
 ## Build & run
 ```bash
-make                 # builds ./loader (gcc -m32 + nasm)
+make                 # gcc -m32 loader.c + nasm startup.s  ->  ./loader
 ./loader loadme      # loads and runs the bundled sample ELF
 ```
-`loadme` is a small 32-bit ELF included so you can see the loader run end-to-end.
+`loadme` is a small 32-bit ELF included so you can watch the loader run end-to-end. It is linked at a **non-default base address** (see `linking_script`, a GNU `ld` script that sets the load address to `0x04048000`) so it doesn't overlap the loader's own `0x08048000` address space.
 
 ## Concepts
-ELF program headers, `mmap`/`mprotect`, page alignment, the `filesz` vs `memsz` (`.bss`) distinction, and the x86 calling convention for handing control to a freshly loaded image.
+ELF program headers, `mmap`/`mprotect`, page alignment, the `filesz` vs `memsz` (`.bss`) distinction, linker scripts / load addresses, and the x86 calling convention for handing control to a freshly loaded image.

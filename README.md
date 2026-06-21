@@ -1,28 +1,30 @@
-# Low-Level Systems & Security — C and x86 Assembly
+# Linux Systems & Security
 
-A portfolio of systems-programming projects written in **C** and **32-bit x86 assembly** on Linux. The work goes down to the ELF binary format, process control, dynamic loading, and low-level security tooling — implemented from scratch against the raw syscall/ABI level rather than with high-level libraries.
+A suite of low-level systems-programming projects written in **C** and **32-bit x86 assembly** on Linux. The work reaches down to the ELF binary format, process control, dynamic loading, multi-precision arithmetic, and security tooling — all implemented from scratch against the raw syscall/ABI level, with no high-level frameworks.
 
-## What's inside
+**Stack:** C (C99) · x86 assembly (NASM) · GNU Make · GNU ld linker scripts · GDB · Linux (32-bit / i386)
 
-| Project | What it does | Key concepts |
+## Projects
+
+| Project | Summary | Key concepts |
 |---|---|---|
-| [**elf-analyzer**](elf-analyzer) | Interactive tool that parses 32-bit ELF files — header, section table, symbol table — and **merges two relocatable objects** into one. | ELF format, `mmap`, section/symbol tables |
 | [**elf-loader**](elf-loader) | A user-space program loader that maps an ELF's `PT_LOAD` segments into memory with correct permissions and transfers control to the entry point. | `mmap`/`mprotect`, program headers, paging, ABI hand-off |
-| [**antivirus-scanner**](antivirus-scanner) | Signature-based scanner: loads a virus-signature database (big/little-endian), detects matches in a file, and **neutralizes** them. | binary parsing, endianness, linked lists, file patching |
-| [**custom-shell**](custom-shell) | A Unix shell with `fork`/`exec`, pipelines, I/O redirection, background jobs, `cd`, and signal control. | process control, pipes, `dup2`, signals |
-| [**x86-assembly**](x86-assembly) | Hand-written x86 assembly implementing a 16-bit **LFSR** pseudo-random generator with hex-string parsing, calling into libc. | NASM, x86 ABI, calling libc, LFSR |
-| [**elf-binary-tools**](elf-binary-tools) | A `hexeditplus` memory/file hex-editor plus a program used for **gdb binary patching**, with ELF-format diagrams. | hex editing, gdb, binary patching, ELF layout |
+| [**elf-analyzer**](elf-analyzer) | Interactive ELF inspector that parses headers, section tables, and symbol tables — and merges two relocatable objects — with no third-party libraries. | ELF format, `mmap`, section/symbol tables |
+| [**signature-based-antivirus**](signature-based-antivirus) | Loads a virus-signature database (big/little-endian), detects byte-sequence matches in a target file, and neutralizes them by patching the binary. | binary parsing, endianness, linked lists, file patching |
+| [**unix-process-shell**](unix-process-shell) | A Unix shell with process forking/execution, pipelines, I/O redirection, background jobs, and signal control. | `fork`/`exec`, pipes, `dup2`, signals |
+| [**x86-bignum-arithmetic**](x86-bignum-arithmetic) | Hand-written x86 assembly performing multi-precision (big-number) arithmetic on length-prefixed byte arrays, with an LFSR random generator. | NASM, x86 ABI, carry propagation, LFSR, libc calls |
+| [**elf-manipulation-suite**](elf-manipulation-suite) | A `hexeditplus` memory/file hex-editor plus a gdb binary-patching target, with annotated ELF-format diagrams. | hex editing, raw file syscalls, gdb, ELF layout |
 
 ## Skills demonstrated
 
 - **Languages:** C (C99), x86 assembly (NASM)
-- **Systems:** Linux syscalls, `fork`/`exec`/`wait`, pipes, `dup2`, signals, `mmap`/`mprotect`, file I/O
-- **Binary / ELF:** ELF32 headers, program & section headers, symbol & relocation tables, dynamic loading, the x86 calling convention
-- **Tooling:** GCC (`-m32`), NASM, GNU Make, GDB, Linux
+- **Operating systems:** Linux syscalls, `fork`/`exec`/`wait`, pipes, `dup2`, signals, `mmap`/`mprotect`, raw file I/O
+- **Binary / ELF internals:** ELF32 headers, program & section headers, symbol & relocation tables, dynamic loading, linker scripts, the x86 calling convention
+- **Tooling:** GCC (`-m32`), NASM, GNU Make, GDB
 
 ## Building & running
 
-All projects target **32-bit x86 Linux**. On a 64-bit host install the multilib toolchain:
+All projects target **32-bit x86 Linux**. On a 64-bit host, install the multilib toolchain:
 
 ```bash
 sudo apt-get install gcc-multilib nasm gdb make   # Debian / Ubuntu
@@ -35,8 +37,8 @@ make          # build
 make clean    # remove build artifacts
 ```
 
-Each project has its own README with run instructions and example sessions.
+Each project has its own README with run instructions, example sessions, and the concepts it demonstrates.
 
-## Note on academic integrity
+---
 
-These projects began as university systems-lab assignments and are published here as a personal portfolio of my own work. If you are currently taking a similar course, please **do not copy** — submitting this as your own violates academic-integrity rules, and plagiarism tools flag public repositories.
+<sub>These projects originated in an academic systems-programming setting and are shared as a personal portfolio of my own work. Please don't submit them as your own — doing so violates academic-integrity policies, and plagiarism tools scan public repositories.</sub>

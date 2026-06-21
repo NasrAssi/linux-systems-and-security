@@ -1,0 +1,11 @@
+# Normalize all text to LF (these build on Linux)
+* text=auto eol=lf
+
+# Never touch binary fixtures / images
+*.png binary
+*.jpg binary
+*.bin binary
+elf-loader/loadme binary
+antivirus-scanner/infected binary
+antivirus-scanner/signatures-B binary
+antivirus-scanner/signatures-L binary

@@ -1,0 +1,20 @@
+# Object files
+*.o
+*.ro
+
+# Compiled executables (Make targets)
+elf-analyzer/myELF
+elf-loader/loader
+antivirus-scanner/AntiVirus
+custom-shell/myshell
+custom-shell/mypipeline
+custom-shell/looper
+x86-assembly/multi
+elf-binary-tools/task1
+elf-binary-tools/task4
+
+# Editor / OS cruft
+.vscode/
+.devcontainer/
+.DS_Store
+Thumbs.db
